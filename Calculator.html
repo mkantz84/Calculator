@@ -48,10 +48,47 @@
         if (number != "") {
             token.push(number);
         }
+        Calculate(token);
         return token;
     }
 
-    SetToken("5+56-44/6*895.6*(6+5)");
+    //todo: validate operations check
+
+    function Calculate(token) {
+        token = CalculateParantheses(token);
+        //todo: calculate devide and multiply first
+        var result = parseFloat(token[0]);
+        for (var i = 2; i < token.length; i += 2) {
+            var secondNum = parseFloat(token[i]);
+            var operator = token[i - 1];
+            switch (operator) {
+                case '+':
+                    result += secondNum;
+                    break;
+                case '-':
+                    result -= secondNum;
+                    break;
+            }
+        }
+        return result;
+    }
+
+    function CalculateParantheses(token) {
+        var newToken = [];
+        var i = token.indexOf("(");
+        if (i == -1) {
+            return token;
+        }
+        var j = token.lastIndexOf(")");
+        for (var k = i + 1; k < j; k++) {
+            newToken.push(token[k]);
+        }
+        token[i] = Calculate(newToken);
+        token.splice(i + 1, j - i);
+        return token;
+    }
+
+    SetToken("5+56-44+(6+895.6+(6+5)+4)");
 </script>
 
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
