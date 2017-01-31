@@ -18,8 +18,14 @@
 </style>
 
 <script>
+    function Calculate(str) {
+        var token = SetToken(str);
+        var result = DoCalculation(token)
+        return result;
+    }
+
     function SetToken(str) {
-        var operators = "+-*/()";
+        var operators = "+-*/()^";
         var token = [];
         var number = "";
         if (str.charAt(0) != "-" && str.charAt(0) != "(" && operators.includes(str.charAt(0))) {
@@ -29,6 +35,7 @@
             return -1;
         }
         token = InsertTokens(operators, number, str);
+        return token;
     }
 
     function InsertTokens(operators, number, str) {
@@ -48,15 +55,17 @@
         if (number != "") {
             token.push(number);
         }
-        Calculate(token);
         return token;
     }
 
     //todo: validate operations check
 
-    function Calculate(token) {
-        token = CalculateParantheses(token);
-        //todo: calculate devide and multiply first
+    function DoCalculation(token) {
+        while (token.indexOf("(")!=-1) {
+            token = CalculateParantheses(token);
+        }        
+        token = CalculatePower(token);
+        token = CalculateMulDev(token);
         var result = parseFloat(token[0]);
         for (var i = 2; i < token.length; i += 2) {
             var secondNum = parseFloat(token[i]);
@@ -73,22 +82,76 @@
         return result;
     }
 
-    function CalculateParantheses(token) {
-        var newToken = [];
-        var i = token.indexOf("(");
-        if (i == -1) {
+    function CalculateMulDev(token) {
+        var result;
+        var i = token.indexOf("*");
+        var j = token.indexOf("/");
+        if (i == -1 && j == -1) {
             return token;
         }
-        var j = token.lastIndexOf(")");
-        for (var k = i + 1; k < j; k++) {
-            newToken.push(token[k]);
+        else if (i == -1) {
+            token[j - 1] = Devide(token, j);
+            token.splice(j, 2);
         }
-        token[i] = Calculate(newToken);
-        token.splice(i + 1, j - i);
+        else if (j == -1) {
+            token[i - 1] = Multiply(token, i);
+            token.splice(i, 2);
+        }
+        else if (i < j) {
+            token[i - 1] = Multiply(token, i);
+            token.splice(i, 2);
+        }
+        else {
+            token[j - 1] = Devide(token, j);
+            token.splice(j, 2);
+        }
+        token = CalculateMulDev(token);
         return token;
     }
 
-    SetToken("5+56-44+(6+895.6+(6+5)+4)");
+    function Multiply(token, i) {
+        var result = token[i - 1] * token[i + 1];
+        return result;
+    }
+
+    function Devide(token, i) {
+        var result = token[i - 1] / token[i + 1];
+        return result;
+    }
+
+    function CalculatePower(token) {
+        var i = token.indexOf("^");
+        if (i == -1) {
+            return token;
+        }
+        token[i - 1] = Math.pow(token[i - 1], token[i + 1]);
+        token.splice(i, 2);
+        token = CalculatePower(token);
+        return token;
+    }
+
+    function CalculateParantheses(token) {
+        var newToken = [];
+        var secondIndex = token.indexOf(")");
+        if (secondIndex == -1) {
+            return token;
+        }
+        var firstIndex = token.lastIndexOf("(", secondIndex);
+        for (var k = firstIndex + 1; k < secondIndex; k++) {
+            newToken.push(token[k]);
+        }
+        token[firstIndex] = DoCalculation(newToken);
+        token.splice(firstIndex + 1, secondIndex - firstIndex);
+        return token;
+    }
+
+    function a() {
+        var result = Calculate("15*(5^(2*2))+3*(2+2)");
+        span = document.getElementById("mySpn");
+        txt = document.createTextNode(result.toString());
+        span.innerText = txt.textContent;
+    }
+
 </script>
 
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
@@ -96,8 +159,11 @@
     <meta charset="utf-8" />
     <title>Calculator</title>
 </head>
-<body>
+<body onload="a()">
     <table>
+        <tr>
+            <td><span id="mySpn"></span></td>
+        </tr>
         <tr>
             <td id="clear">C</td>
             <td id="startBrack">(</td>
